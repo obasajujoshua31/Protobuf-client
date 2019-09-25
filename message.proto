@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+
+message Message {
+     string text = 1;
+     string lang = 2;
+}
+
+message HealthCheckDetail {
+    string componentID = 1;
+    string type = 2;
+    double observedValue = 3;
+    string observedUnit = 4;
+    string status = 5;
+    string output = 7;
+}
+
+message NamedHealthCheckDetail {
+    string name = 1;
+    repeated HealthCheckDetail details = 2;
+}
+
+
+message HealthCheck {
+    string status = 1;
+    string version = 2;
+    string releaseID = 3;
+    repeated string notes = 4;
+    string output = 5;
+    repeated NamedHealthCheckDetail details = 6;
+}
+
+message HealthCheckResponse {
+    HealthCheck health = 1;
+}
+
+
+message ProtectionPlanRequest{
+    string zip = 1;
+}
+
+message ProtectionPlanResponse {
+    string globalProtectionPlanUrl = 1;
+}

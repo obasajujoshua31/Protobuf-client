@@ -1,0 +1,130 @@
+ <html>
+  <head>
+    <script src="long.js"></script>
+    <script src="bytebuffer.js"></script>
+    <script src="protobuf.js"></script>
+    <script src="axios.min.js"></script>
+  </head>
+  <body>
+    <pre id="content"></pre>
+    <label>text:</label>
+    <input type="text" required id="text" />
+
+    <label>lang:</label>
+    <input type="text" required id="lang" />
+    <button onClick="sendMessage()">send message to server</button>
+    <script type="text/javascript">
+      "use strict";
+      let ProtoBuf = dcodeIO.ProtoBuf;
+      let HealthCheckResponse = ProtoBuf.loadProtoFile(
+        "./message.proto",
+        (err, builder) => {
+          HealthCheckResponse = builder.build("HealthCheckResponse");
+        }
+      );
+
+      let protectionPlanResponse = ProtoBuf.loadProtoFile(
+        "./message.proto",
+        (err, builder) => {
+          protectionPlanResponse = builder.build("ProtectionPlanResponse");
+        }
+      );
+
+      let protectionPlanRequest = ProtoBuf.loadProtoFile(
+        "./message.proto",
+        (err, builder) => {
+          protectionPlanRequest = builder.build("ProtectionPlanRequest");
+        }
+      );
+      let Message = ProtoBuf.loadProtoFile(
+        "./message.proto",
+        (err, builder) => {
+          Message = builder.build("Message");
+          loadMessage();
+        }
+      );
+
+      let loadMessage = () => {
+        axios
+          .get("/api/messages", { responseType: "arraybuffer" })
+          .then(function(response) {
+            console.log("Response from the server: ", response);
+            let msg = Message.decode(response.data);
+            console.log("Decoded message", msg);
+            document.getElementById("content").innerText = JSON.stringify(
+              msg,
+              null,
+              2
+            );
+          })
+          .catch(function(response) {
+            console.log(response);
+          });
+      };
+      let sendMessages = () => {
+        const text = document.getElementById("text").value;
+        const lang = document.getElementById("lang").value;
+
+        let msg = new Message({ text, lang });
+        axios
+          .post("/api/messages", msg.toArrayBuffer(), {
+            responseType: "arraybuffer",
+            headers: { "Content-Type": "application/octet-stream" },
+          })
+          .then(function(response) {
+            console.log(response);
+          })
+          .catch(function(response) {
+            console.log(response);
+          });
+      };
+      let sendMessage = () => {
+        const zip = "Obasaju Joshua";
+
+        let zipMessage = new protectionPlanRequest({ zip });
+
+        console.log("========requestc", zipMessage.toArrayBuffer());
+
+        axios
+          .post(
+            "https://localhost:50051/experience/od_global_protection_plan",
+            zipMessage.toArrayBuffer(),
+
+            {
+              responseType: "arraybuffer",
+              headers: {
+                Accept: "application/octet-stream",
+                "Content-Type": "application/octet-stream",
+              },
+            }
+          )
+          .then(function(response) {
+            console.log("=======", response);
+            let protectionPlan = protectionPlanResponse.decode(response.data);
+            console.log("=====", protectionPlan);
+          })
+          .catch(error => {
+            console.log("Server error", error);
+          });
+      };
+      let send = () => {
+        axios
+          .get("https://localhost:50051/healthcheck", {
+            headers: {
+              Accept: "application/x-protobuf",
+              "Content-Type": "application/x-protobuf",
+            },
+            responseType: "arraybuffer",
+          })
+          .then(function(response) {
+            console.log("=======", response);
+            let healthResponse = HealthCheckResponse.decode(response.data);
+            console.log("------======", healthResponse);
+          })
+          .catch(error => {
+            console.log("Server error", error);
+          });
+      };
+    </script>
+  </body>
+</html>
